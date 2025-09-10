@@ -1,7 +1,7 @@
 import socket
 import threading
 
-IP = "127.0.0.1"
+IP = "127.0.19.2"
 PORT = 9898
 CLIENTS = []
 CLIENTS_LOCK = threading.Lock()

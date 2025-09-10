@@ -1,34 +1,30 @@
 import socket
 import threading
 
-DESTINATION = "127.0.0.1"
+DESTINATION = "127.0.19.2"
 PORT = 9898
 
 def send(client):
     while True:
-        try:
-            mesg = str(input("-->"))
+        
+            mesg = str(input(""))
             if mesg.lower() == "exit":
                 print("----EXIT----")
                 client.close()
-                # break
+                break
                 exit()
             client.send(mesg.encode())
-        except:
-            print("[1] ERROR !!!")
-            break
+        
 
 def recevie(client):
     while True:
-        try:
+    
             response = client.recv(4092).decode()
             if not response:
                 print("Connection Lost...")
                 break
-            print(f"\n\t\t{response}")
-        except:
-            print("[2] ERROR!!!")
-            break
+            print(f"\n\t\t\t{response}")
+        
 
 def main():
     try:
