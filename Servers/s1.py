@@ -12,7 +12,8 @@ def broadcast(message, sender_sock):
             if client != sender_sock:
                 try:
                     client.send(message)
-                except:
+                except Exception as e:
+                    print(f"Connection Closed due to an Exeption: {e}")
                     CLIENTS.remove(client)
                     client.close()
 
@@ -35,6 +36,7 @@ def handle_client(client_sock, client_address):
         else:
             client_sock.send(b"Invalid option. Connection closed.\n")
             CLIENTS.remove(client_sock)
+            client_sock.shutdown(socket.SHUT_RDWR)
             client_sock.close()
             exit()
 
