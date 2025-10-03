@@ -1,7 +1,7 @@
 import socket
 import threading
 
-DESTINATION = "127.0.19.2"
+DESTINATION = "127.0.0.1"
 PORT = 9898
 
 def send(client):
