@@ -6,7 +6,7 @@ PORT = 9898
 
 def send(client):
     while True:
-        
+        try:
             mesg = str(input(""))
             if mesg.lower() == "exit":
                 print("----EXIT----")
@@ -14,17 +14,21 @@ def send(client):
                 break
                 exit()
             client.send(mesg.encode())
-        
+        except OSError:
+            print("Connection Lost...")
+            break
 
-def recevie(client):
+def receive(client):
     while True:
-    
+        try:
             response = client.recv(4092).decode()
             if not response:
                 print("Connection Lost...")
                 break
             print(f"\n\t\t\t{response}")
-        
+        except OSError:
+            print("Connection Lost...")
+            break
 
 def main():
     try:
@@ -32,14 +36,14 @@ def main():
         client.connect((DESTINATION, PORT))
 
         sender_Th = threading.Thread(target=send, args=(client,))
-        recevie_th = threading.Thread(target=recevie, args=(client,))
+        recevie_th = threading.Thread(target=receive, args=(client,))
 
         sender_Th.start()
         recevie_th.start()
 
         sender_Th.join()
         recevie_th.join()
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, OSError):
         client.close()
         exit()
    

@@ -1,7 +1,7 @@
 import socket
 import threading
 
-IP = "127.0.0.2"
+IP = "127.0.0.1"
 PORT = 9898
 CLIENTS = []
 CLIENTS_LOCK = threading.Lock()
@@ -23,10 +23,20 @@ def handle_client(client_sock, client_address):
         opt = client_sock.recv(1024).decode()
         if opt == "1":
             signup(client_sock)
-        elif opt == "2":
-            if not signin(client_sock): # if signin -> Trur then the if body will not execut .
+            if not signin(client_sock):     # Exit
                 CLIENTS.remove(client_sock)
                 client_sock.close()
+                exit()
+        elif opt == "2":
+            if not signin(client_sock): # if signin -> Trur then the if body will not execut .  # Exit
+                CLIENTS.remove(client_sock)
+                client_sock.close()
+                exit()
+        else:
+            client_sock.send(b"Invalid option. Connection closed.\n")
+            CLIENTS.remove(client_sock)
+            client_sock.close()
+            exit()
 
         while True:
             try:
@@ -55,8 +65,10 @@ def signup(client_sock):
     client_sock.send(b"Signup successful!\n")
     with open("users.txt", "a") as f:
         f.write(f"{username}:{password}\n")
+    print("*"*50)
+    print("New user signed up:", username)
+
     
-    signin(client_sock)
 
 def signin(client_sock):
     """
@@ -72,7 +84,7 @@ def signin(client_sock):
     while attempts > 0:
         with open("users.txt", "r") as f:
             users = f.readlines()
-            found = False
+    
             for user in users:
                 u, p = user.strip().split(":")
                 if u == username and p == password:
@@ -86,7 +98,10 @@ def signin(client_sock):
             username = client_sock.recv(1024).decode().strip()
             client_sock.send(b"Enter Password: ")
             password = client_sock.recv(1024).decode().strip()
-    return False
+        elif attempts < 3:
+            print("Too many failed attempts. Connection closed.")
+            client_sock.send(b"INVALID_CREDENTIALS.\n")
+            return False
                     
     # -------------------------------
 def main():
