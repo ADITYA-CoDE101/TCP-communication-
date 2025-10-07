@@ -58,7 +58,7 @@ def receive(client):
             print(f"\n\t\t\t{response}")
         except OSError:
             print("[3] Connection Lost ...")
-            stop_event.set()
+            stop_event.set()  # send's the signal to the thread to stop
             break
     
 def main():
@@ -81,9 +81,8 @@ def main():
                 break
     except KeyboardInterrupt:
         print("Interrupted. Closing client.")
-        stop_event.set()
         client.close()
-        client.close()
+    
 
 
 if __name__ == "__main__":
