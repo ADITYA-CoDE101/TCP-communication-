@@ -47,7 +47,7 @@ def handle_client(client_sock, client_address):
 def terminator(client_sock):
     with CLIENTS_LOCK:
         try:
-            client_sock.send(b" DISCONNECTED") #if the socket is already closed or in an error state, client_sock.send() may fail
+            client_sock.send(b"DISCONNECTED") #if the socket is already closed or in an error state, client_sock.send() may fail
         except Exception as e:
             print(f"Error while Terminating the client {client_sock}")
         

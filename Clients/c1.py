@@ -9,23 +9,15 @@ def send(client):
     while not stop_event.is_set():
         try:
             mesg = str(input(""))
-            if mesg.lower() == "--exit":
+            if mesg.lower() == "--exit" or mesg == "-q":
                 print("----EXIT----")
-                # -----------------------------------
-                    # actually close the connection properly
-                try:
-                    client.shutdown(socket.SHUT_RDWR)
-                except Exception:
-                    pass
-                # -----------------------------------
-                client.close()
-                stop_event.set()
-                break
+                client.send(b"RQST-> Disconnection") # will request disconnection to the server, so the both side knows that the client has been disconnected.
+                terminator(client)                      # >[1] also need to add to the server side that, if the disconnection request cames form the client then it need to close the connection from its side too.
+                
             client.send(mesg.encode())
         except OSError:
             print("[1] Connection Lost ...")
-            stop_event.set()
-            break
+            terminator(client)
 
 def receive(client):
     while not stop_event.is_set():
@@ -35,31 +27,28 @@ def receive(client):
                 print("[2] Connection Lost...")
                 # -----------------------------------
                     # actually close the connection properly
-                try:
-                    client.shutdown(socket.SHUT_RDWR)
-                except Exception:
-                    pass
                 # -----------------------------------
                 print("Connection closed by the server.")
-                stop_event.set()
-                break
-            if response == "INVALID_CREDENTIALS":
-                print("Invalid credentials. Closing connection.")
+                terminator(client)
+
+            if response == "DISCONNECTED":
+                terminator(client)                                      # Termination
                 # -----------------------------------
                     # actually close the connection properly
-                try:
-                    client.shutdown(socket.SHUT_RDWR)
-                except Exception:
-                    pass
                 # -----------------------------------
-                client.close()
-                stop_event.set()
-                break
-            print(f"\n\t\t\t{response}")
+        
+            print(f"\n\t\t\t\t\t\t{response} <─┘")
         except OSError:
             print("[3] Connection Lost ...")
-            stop_event.set()  # send's the signal to the thread to stop
-            break
+            terminator(client)                                         # Termination
+
+def terminator(client):
+    try:
+        client.shutdown(socket.SHUT_RDWR)
+    except Exception:
+        pass
+    stop_event.set()
+    client.close()
     
 def main():
     global stop_event
@@ -81,9 +70,12 @@ def main():
                 break
     except KeyboardInterrupt:
         print("Interrupted. Closing client.")
-        client.close()
+        terminator(client)
     
 
 
 if __name__ == "__main__":
     main()
+
+
+# we will use RQST> keyword for the request for the server
