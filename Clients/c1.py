@@ -11,13 +11,15 @@ def send(client):
             mesg = str(input(""))
             if mesg.lower() == "--exit" or mesg == "-q":
                 print("----EXIT----")
-                client.send(b"RQST-> Disconnection") # will request disconnection to the server, so the both side knows that the client has been disconnected.
-                terminator(client)                      # >[1] also need to add to the server side that, if the disconnection request cames form the client then it need to close the connection from its side too.
+                 # will request disconnection to the server, so the both side knows that the client has been disconnected.
+                reason = "Client request's EXIT."
+                terminator(client, reason)                      # >[1] also need to add to the server side that, if the disconnection request cames form the client then it need to close the connection from its side too.
                 
             client.send(mesg.encode())
-        except OSError:
-            print("[1] Connection Lost ...")
-            terminator(client)
+        except Exception as e:
+            print("[1] Connection Lost ...",
+                  f"\n\t└─>[ ERROR ]: {e}")
+            terminator(client, e)
 
 def receive(client):
     while not stop_event.is_set():
@@ -38,15 +40,23 @@ def receive(client):
                 # -----------------------------------
         
             print(f"\n\t\t\t\t\t\t{response} <─┘")
-        except OSError:
-            print("[3] Connection Lost ...")
-            terminator(client)                                         # Termination
+        except Exception as e:
+            print("[3] Connection Lost ...",
+                  f"\n\t└─>[ ERROR ]: {e}")
+            terminator(client, e)                                         # Termination
 
-def terminator(client):
+def terminator(client, reason=None):
+    try:
+        client.send(f"RQST-> Disconnection: {reason}".encode("utf-8"))    # >[2]
+    except Exception as e:
+        print("[ ERROR ]: while terminating[1]: {e}")
+    """I think if there are two condition in the try block that may get 
+    errors but is one line gives error and other line still needs to execute, 
+    it one give error the try block will terminate and except block will excute."""
     try:
         client.shutdown(socket.SHUT_RDWR)
-    except Exception:
-        pass
+    except Exception as e:
+        print("[ ERROR ]: while terminating[2]: {e}")
     stop_event.set()
     client.close()
     
@@ -79,3 +89,5 @@ if __name__ == "__main__":
 
 
 # we will use RQST> keyword for the request for the server
+
+# [ ERROR ]:
