@@ -50,20 +50,11 @@ def terminator(client, reason=None, req = False):
         except Exception as e:
             print(f"[ ERROR ]: while terminating[1]: {e}")
     try:
-        client.shutdown(socket.SHUT_RDWR)  # Gracefully shutdown the socket
+        client.shutdown(socket.SHUT_RDWR)
+        stop_event.set()
+        client.close()
     except Exception as e:
-        print(f"Error shutting down socket: {e}")
-    stop_event.set()
-    try:
-        client.close()  # Ensure the socket is properly closed
-    except Exception as e:
-        print(f"Error closing socket: {e}")
-    # try:
-    #     client.shutdown(socket.SHUT_RDWR)
-        
-    #     client.close()
-    # except Exception as e:
-    #     print(f"[ ERROR ]: while terminating[2]: {e}")
+        print(f"[ ERROR ]: while terminating[2]: {e}")
     
     
 def main():
