@@ -4,22 +4,25 @@ import sys
 
 DESTINATION = "127.0.0.1"
 PORT = 9898
+DISCONNECT_REQUEST = "RQST-> DISCONNECT"
 
 def send(client):
     while not stop_event.is_set():
         try:
             mesg = str(input(""))
-            if mesg.lower() == "--exit" or mesg == "-q":
+            if mesg in ("--exit", "-q"):
                 print("----EXIT----")
                  # will request disconnection to the server, so the both side knows that the client has been disconnected.
                 reason = "Client request's EXIT."
-                terminator(client, reason)                      # >[1] also need to add to the server side that, if the disconnection request cames form the client then it need to close the connection from its side too.
+                terminator(client, reason)                # >[1] also need to add to the server side that, if the disconnection request cames form the client then it need to close the connection from its side too.
+                return
                 
             client.send(mesg.encode())
         except Exception as e:
             print("[1] Connection Lost ...",
                   f"\n\t└─>[ ERROR ]: {e}")
             terminator(client, e)
+            return
 
 def receive(client):
     while not stop_event.is_set():
@@ -27,17 +30,13 @@ def receive(client):
             response = client.recv(4092).decode()
             if not response:
                 print("[2] Connection Lost...")
-                # -----------------------------------
-                    # actually close the connection properly
-                # -----------------------------------
                 print("Connection closed by the server.")
                 terminator(client)
-
-            if response == "DISCONNECTED":
+                return
+            s_cmd = response.strip()                        # Server command to terminate
+            if s_cmd == "DISCONNECTED":
                 terminator(client)                                      # Termination
-                # -----------------------------------
-                    # actually close the connection properly
-                # -----------------------------------
+                return
         
             print(f"\n\t\t\t\t\t\t{response} <─┘")
         except Exception as e:
@@ -47,12 +46,9 @@ def receive(client):
 
 def terminator(client, reason=None):
     try:
-        client.send(f"RQST-> Disconnection: {reason}".encode("utf-8"))    # >[2]
+        client.send(f"{DISCONNECT_REQUEST}: {reason}".encode("utf-8"))    # >[2]
     except Exception as e:
         print("[ ERROR ]: while terminating[1]: {e}")
-    """I think if there are two condition in the try block that may get 
-    errors but is one line gives error and other line still needs to execute, 
-    it one give error the try block will terminate and except block will excute."""
     try:
         client.shutdown(socket.SHUT_RDWR)
     except Exception as e:
