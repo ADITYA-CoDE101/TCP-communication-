@@ -3,7 +3,7 @@ import threading
 import sys
 
 DESTINATION = "127.0.0.1"
-PORT = 9898
+PORT = 9000
 
 def send(client):
     while not stop_event.is_set():

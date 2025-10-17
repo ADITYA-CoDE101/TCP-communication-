@@ -1,9 +1,10 @@
 import socket
 import threading
 import sys
+import time
 
 DESTINATION = "127.0.0.1"
-PORT = 9898
+PORT = 9001
 DISCONNECT_REQUEST = "RQST-> DISCONNECT"
 
 def send(client):
@@ -30,10 +31,12 @@ def receive(client):
             if not response:
                 print("[2] Connection Lost...")
                 print("Connection closed by the server.")
+                stop_event.set()
                 terminator(client, req=True)
                 return
             s_cmd = response.strip()                        # Server command to terminate
             if s_cmd == "DISCONNECTED":  
+                stop_event.set()
                 print("disconnected")                                   # Termination
                 return
         
@@ -41,7 +44,9 @@ def receive(client):
         except Exception as e:
             print("[3] Connection Lost ...",
                   f"\n\t└─>[ ERROR ]: {e}")
-            terminator(client, e, req=True)                                         # Termination
+            stop_event.set()
+            terminator(client, e, req=True)                                     # Termination
+            return
 
 def terminator(client, reason=None, req = False):
     if req:
@@ -49,12 +54,18 @@ def terminator(client, reason=None, req = False):
             client.send(f"{DISCONNECT_REQUEST}: {reason}".encode())    # >[2]
         except Exception as e:
             print(f"[ ERROR ]: while terminating[1]: {e}")
+
     try:
-        client.shutdown(socket.SHUT_RDWR)
-        stop_event.set()
-        client.close()
+        time.sleep(0.1)
+        client.shutdown(socket.SHUT_RDWR)  # Gracefully shutdown the socket
     except Exception as e:
-        print(f"[ ERROR ]: while terminating[2]: {e}")
+        print(f"Error shutting down socket: {e}")
+
+    try:
+        client.close()  # Ensure the socket is properly closed
+    except Exception as e:
+        print(f"Error closing socket: {e}")
+   
     
     
 def main():
@@ -77,6 +88,7 @@ def main():
                 break
     except KeyboardInterrupt:
         print("Interrupted. Closing client.")
+        stop_event.set()
         terminator(client,req=True)
         
     
