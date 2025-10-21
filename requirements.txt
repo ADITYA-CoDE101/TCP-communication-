@@ -1,0 +1,2 @@
+bcrypt 
+mysql-connector-python.

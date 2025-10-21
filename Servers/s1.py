@@ -4,7 +4,7 @@ import sys
 import sqlite3
 import time
 
-IP = "127.0.0.1"
+IP = "192.168.87.45"
 PORT = 9898
 UACL = [] #  Unauthenticated Client List
 ACL = [] #   Authenticated Client List
