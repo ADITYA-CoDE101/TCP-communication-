@@ -93,6 +93,59 @@ def is_username_taken(username):
         print(f"Database error while checking username: {e}")
         return False
     
+def signin(client_sock):
+    """
+    Simple signin flow over a socket.
+    Returns True on success, False on failure.
+    """
+    client_sock.send(b"Enter Username: ")
+    username = client_sock.recv(1024).decode().strip()
 
-signup()
+    client_sock.send(b"Enter Password: ")
+    password = client_sock.recv(1024).decode().strip()
+
+    try:
+        conn = get_mysql_connection()
+        if not conn:
+            client_sock.send(b"Database unavailable. Try later.\n")
+            return False
+
+        cursor = conn.cursor()
+        try:
+            cursor.execute('SELECT password FROM users WHERE username = %s', (username,))
+            row = cursor.fetchone()
+            if not row:
+                client_sock.send(b"Invalid username or password.\n")
+                return False
+
+            stored = row[0]  # may be bytes or str
+            # Normalize to bytes for bcrypt
+            if isinstance(stored, str):
+                stored_bytes = stored.encode('utf-8')
+            else:
+                stored_bytes = stored
+
+            if bcrypt.checkpw(password.encode('utf-8'), stored_bytes):
+                client_sock.send(b"Signin successful!\n")
+                return True
+            else:
+                client_sock.send(b"Invalid username or password.\n")
+                return False
+        finally:
+            try:
+                cursor.close()
+            except Exception:
+                pass
+            try:
+                conn.close()
+            except Exception:
+                pass
+    except Error as e:
+        print(f"Database error during signin: {e}")
+        client_sock.send(b"An error occurred. Please try again later.\n")
+        return False
+    
+
+# signup()
+signin()
 
