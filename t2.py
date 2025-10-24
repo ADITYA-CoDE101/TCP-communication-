@@ -3,17 +3,26 @@ from mysql.connector import Error
 import bcrypt
 import mysql.connector
 from datetime import datetime
+from configparser import ConfigParser
+
+
 
 print("MySQL Connector module is imported.")
 def get_mysql_connection():
     print("Attempting to connect to MySQL database...")
     try:
+        cfg = ConfigParser()
+        cfg .read('/home/dell/Documents/Coding/git_test/backup_files/TCP-communication-/test/test_config/chat.confg')
         conn = mysql.connector.connect(
-            host="localhost",       # Hostname of your MySQL server
-            user="root",   # Your MySQL username
-            password="1234",  # Your MySQL password
-            database="chat1"     # Your database name
+            host = cfg.get('msql', 'host', fallback='localhost'),
+            user = cfg.get('mysql', 'user', fallback='root'),
+            password = cfg.get('mysql', 'password', fallback=''),
+            database=cfg.get('mysql', 'database', fallback='chat1')
         )
+        ''' host="localhost",       # Hostname of your MySQL server
+            user="dell",   # Your MySQL username
+            password="1234",  # Your MySQL password
+            database="chat1"     # Your database name'''
         print("Connection to MySQL database was successful.")
         if conn.is_connected():
             print("MySQL connection is active.")
@@ -46,7 +55,7 @@ def signup():
             cursor = conn.cursor()
             try:
                 cursor.execute(
-                    'INSERT INTO users (username, password, Time) VALUES (%s, %s, %s)',
+                    'INSERT INTO users (username, password, `Time[ YYYY-MM-DD HH:MM:SS ]`) VALUES (%s, %s, %s)',
                     (username, hashed_password, current_timestamp)
                 )
                 conn.commit()
@@ -93,21 +102,21 @@ def is_username_taken(username):
         print(f"Database error while checking username: {e}")
         return False
     
-def signin(client_sock):
+def signin():
     """
     Simple signin flow over a socket.
     Returns True on success, False on failure.
     """
-    client_sock.send(b"Enter Username: ")
-    username = client_sock.recv(1024).decode().strip()
+    print(b"Enter Username: ")
+    username = input()
 
-    client_sock.send(b"Enter Password: ")
-    password = client_sock.recv(1024).decode().strip()
+    print(b"Enter Password: ")
+    password = input()
 
     try:
         conn = get_mysql_connection()
         if not conn:
-            client_sock.send(b"Database unavailable. Try later.\n")
+            print(b"Database unavailable. Try later.\n")
             return False
 
         cursor = conn.cursor()
@@ -115,7 +124,7 @@ def signin(client_sock):
             cursor.execute('SELECT password FROM users WHERE username = %s', (username,))
             row = cursor.fetchone()
             if not row:
-                client_sock.send(b"Invalid username or password.\n")
+                print(b"Invalid username or password.\n")
                 return False
 
             stored = row[0]  # may be bytes or str
@@ -126,10 +135,10 @@ def signin(client_sock):
                 stored_bytes = stored
 
             if bcrypt.checkpw(password.encode('utf-8'), stored_bytes):
-                client_sock.send(b"Signin successful!\n")
+                print(b"Signin successful!\n")
                 return True
             else:
-                client_sock.send(b"Invalid username or password.\n")
+                print(b"Invalid username or password.\n")
                 return False
         finally:
             try:
@@ -142,10 +151,10 @@ def signin(client_sock):
                 pass
     except Error as e:
         print(f"Database error during signin: {e}")
-        client_sock.send(b"An error occurred. Please try again later.\n")
+        print(b"An error occurred. Please try again later.\n")
         return False
     
 
-# signup()
+signup()
 signin()
 

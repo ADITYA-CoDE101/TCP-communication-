@@ -83,7 +83,7 @@ def receive(client):
         except Exception as e:
             print("[3] Connection Lost ...",
                   f"\n\t└─>[ ERROR ]: {e}")
-            terminator(client, e, req=True)                                     # Termination
+            terminator(client, e, req=True)                             # Termination
             return
 
 def terminator(client, reason=None, req = False):

@@ -14,4 +14,5 @@ def get_mysql_connection():
             return conn
     except Error as e:
         print(f"Failed to connect to MySQL database: {e}")
+        conn.close()
     return None
